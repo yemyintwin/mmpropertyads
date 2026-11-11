@@ -28,11 +28,12 @@ For an Azure deployment, configure the Static Web App origin in the Function App
 
 ## Deploy to Azure
 
-The API is deployed as a separate Azure Functions app; it is not part of the Static Web App deployment. Create a Function App using the .NET 10 isolated worker runtime and Azure Functions v4, then configure the repository:
+The API is deployed as a separate Azure Functions app; it is not part of the Static Web App deployment. Create a Function App using the .NET 10 isolated worker runtime and Azure Functions v4. For Flex Consumption, configure deployment with OpenID Connect (OIDC); publish profiles require basic authentication, which should remain disabled.
 
 - Add the Function App name as the `AZURE_FUNCTIONAPP_NAME` Actions variable.
-- Add its publish profile as the `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` Actions secret.
+- Create a user-assigned managed identity with a federated credential for `repo:yemyintwin/mmpropertyads:ref:refs/heads/main`, and assign it the **Website Contributor** role scoped to the Function App.
+- Add the identity's client ID, tenant ID, and the subscription ID as the `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` Actions secrets.
 
-The `Deploy Azure Functions API` workflow publishes the API when backend files change on `main`, or can be started manually. It remains skipped until `AZURE_FUNCTIONAPP_NAME` is configured.
+The `Deploy Azure Functions API` workflow publishes the API when backend files change on `main`, or can be started manually. It remains skipped until `AZURE_FUNCTIONAPP_NAME` is configured. The workflow uses `Azure/functions-action` with Flex Consumption deployment support. See [Microsoft's GitHub Actions OIDC guide](https://learn.microsoft.com/azure/azure-functions/functions-how-to-github-actions) for identity setup.
 
 To connect the frontend, configure both `API_BASE_URL` and `NEXT_PUBLIC_API_BASE_URL` in the Static Web App with the Function App origin (for example, `https://<function-app>.azurewebsites.net`), and allow the Static Web App origin in the Function App's CORS settings. Since the Static Web App uses hybrid Next.js, the separate Function App will appear under Azure Function Apps, not in the Static Web App's APIs blade.
