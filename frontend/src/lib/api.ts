@@ -152,6 +152,10 @@ export async function requestJson(
   }
 }
 
+function shouldFallbackToSampleData(message: string): boolean {
+  return message === "The service is unavailable. Please try again later.";
+}
+
 export async function searchListings(
   params: URLSearchParams,
 ): Promise<ApiResult<ListingSearchResponse>> {
@@ -164,7 +168,13 @@ export async function searchListings(
     `/api/listings${query ? `?${query}` : ""}`,
   );
 
-  if (!result.ok) return result;
+  if (!result.ok) {
+    if (shouldFallbackToSampleData(result.message)) {
+      return { ok: true, value: searchSampleListings(params) };
+    }
+    return result;
+  }
+
   return isSearchResponse(result.value)
     ? { ok: true, value: result.value }
     : {
@@ -185,7 +195,16 @@ export async function getListing(slug: string): Promise<ApiResult<Listing>> {
     `/api/listings/${encodeURIComponent(slug)}`,
   );
 
-  if (!result.ok) return result;
+  if (!result.ok) {
+    if (shouldFallbackToSampleData(result.message)) {
+      const listing = getSampleListing(slug);
+      return listing
+        ? { ok: true, value: listing }
+        : { ok: false, status: 404, message: "The requested listing was not found." };
+    }
+    return result;
+  }
+
   return isListing(result.value)
     ? { ok: true, value: result.value }
     : {
@@ -205,7 +224,12 @@ export async function getSimilarListings(
       const result = await requestJson(
         `/api/listings/${encodeURIComponent(listing.id)}/similar`,
       );
-      if (!result.ok) return result;
+      if (!result.ok) {
+        if (shouldFallbackToSampleData(result.message)) {
+          return { ok: true, value: getSampleSimilarListings(listing, limit) };
+        }
+        return result;
+      }
 
       const value = Array.isArray(result.value)
         ? result.value
