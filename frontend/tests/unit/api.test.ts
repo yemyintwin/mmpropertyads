@@ -70,15 +70,17 @@ describe("searchListings", () => {
     });
   });
 
-  it("reports service failures explicitly", async () => {
+  it("falls back to sample listings when the configured API is unavailable", async () => {
     vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
 
-    const result = await searchListings(new URLSearchParams());
+    const result = await searchListings(new URLSearchParams({ type: "ForRent" }));
 
-    expect(result).toEqual({
-      ok: false,
-      message: "The service is unavailable. Please try again later.",
-    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.totalCount).toBe(20);
+      expect(result.value.items).toHaveLength(20);
+      expect(result.value.items.every((listing) => listing.listingType === "ForRent")).toBe(true);
+    }
   });
 
   it("loads sample rentals when the API is not configured", async () => {
