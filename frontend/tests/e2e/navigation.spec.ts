@@ -11,14 +11,16 @@ test("home page renders the public property search entry point", async ({ page }
   await expect(page.getByRole("link", { name: "Post an ad" })).toBeVisible();
 });
 
-test("search page preserves filters in the URL and reports unavailable API", async ({
+test("search page restores URL filters and renders matching listings", async ({
   page,
 }) => {
   await page.goto("/search?area=Bahan&beds=2");
 
-  await expect(page.getByRole("heading", { name: "Find a home" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Homes to buy or rent" }),
+  ).toBeVisible();
   await expect(page.getByLabel("Location")).toHaveValue("Bahan");
-  await expect(page.getByText("Listings are unavailable")).toBeVisible();
+  await expect(page.getByRole("article").first()).toBeVisible();
 });
 
 test("private auth form is rendered without indexing", async ({ page }) => {
